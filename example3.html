@@ -1,0 +1,28 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Password Check</title>
+</head>
+<body>
+
+<h2>Password Validation</h2>
+
+<input type="password" id="password" placeholder="Enter Password">
+<button onclick="login()">Login</button>
+
+<h3 id="result"></h3>
+
+<script>
+function login() {
+    let pass = document.getElementById("password").value;
+
+    if (pass === "1234")
+        document.getElementById("result").innerHTML = "Login Successful";
+    else
+        document.getElementById("result").innerHTML = "Incorrect Password";
+}
+</script>
+
+</body>
+</html>

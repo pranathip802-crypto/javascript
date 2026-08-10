@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Focus Guardian</title>
+  <button id="checkBtn">Check Backend Connection</button>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1"></script>
+  <style>
+    :root{
+      --bg: #ffffff; --fg:#111; --card:#f0f0f0; --accent:#0a84ff; --muted:#6b7280;
+    }
+    @media (prefers-color-scheme: dark){
+      :root{ --bg:#000; --fg:#fff; --card:#1a1a1a; --accent:#4da3ff; --muted:#a3a3a3; }
+    }
+    *{ box-sizing:border-box; }
+    body{
+      margin:0; font-family: Arial, sans-serif; background:var(--bg); color:var(--fg);
+      transition: background .3s, color .3s; text-align:center;
+    }
+    h1{ margin:20px 0; }
+    .page{ display:none; padding:16px 16px 86px; } /* leave space for bottom nav */
+    /* Splash */
+    #page1{
+      display:flex; align-items:center; justify-content:center; height:100vh; flex-direction:column;
+    }
+    #page1 h1{ font-size:28px; color:#004aad; }
+    #page1 p{ font-size:16px; color:var(--muted); }
+
+    /* Card */
+    .card{
+      width:100%; max-width:900px; margin:12px auto; padding:14px; border-radius:12px;
+      background:var(--card); display:flex; align-items:center; justify-content:space-between;
+    }
+    .card img{ width:40px; height:40px; border-radius:8px; margin-right:10px; }
+    .card .left{ display:flex; align-items:center; gap:10px; text-align:left; }
+    .card button{
+      padding:8px 12px; border:none; border-radius:8px; background:var(--accent); color:#fff; cursor:pointer;
+    }
+
+    /* Search */
+    .searchWrap{ width:100%; max-width:900px; margin:0 auto 8px; position:sticky; top:8px; z-index:5; }
+    #searchInput{
+      width:100%; padding:12px 14px; border-radius:12px; border:1px solid #ddd; outline:none;
+      background:var(--card); color:var(--fg);
+    }
+
+    /* Slider (swipe) */
+    .slider{
+      width:100%; max-width:900px; margin:10px auto 0; display:flex; gap:12px; overflow-x:auto;
+      scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; padding-bottom:8px;
+    }
+    .slide{
+      scroll-snap-align:start; flex: 0 0 92%; background:var(--card); border-radius:16px; padding:12px;
+    }
+    .slide h2{ margin:6px 0 12px; font-size:18px; }
+
+    /* App list grid inside slide */
+    .apps{
+      display:grid; grid-template-columns: 1fr; gap:10px;
+    }
+    @media (min-width:520px){ .apps{ grid-template-columns: 1fr 1fr; } }
+    @media (min-width:820px){ .apps{ grid-template-columns: 1fr 1fr 1fr; } }
+
+    /* Options Page */
+    #page3,#page4,#page5,#page6{ padding-top:16px; }
+    .option{
+      margin:10px auto; padding:12px; border-radius:10px; width:80%; max-width:560px;
+      cursor:pointer; background:var(--card);
+    }
+    .option:hover{ opacity:.9; }
+
+    /* Bottom Nav */
+    .nav{
+      position:fixed; bottom:0; left:0; right:0; background:var(--card); display:flex;
+      justify-content:space-around; padding:12px 8px; border-top:1px solid rgba(0,0,0,.06);
+    }
+    .nav div{ cursor:pointer; padding:8px 12px; border-radius:12px; }
+    .nav .active{ background:var(--accent); color:#fff; }
+
+    /* Small helper text */
+    .muted{ color:var(--muted); font-size:12px; margin-top:6px; }
+
+    /* Small list lines for usage */
+    .usageLine{ display:flex; align-items:center; gap:8px; justify-content:center; margin:4px 0; }
+    .usageLine img{ width:18px; height:18px; border-radius:4px; }
+    .chartWrap {
+  width: 100%;
+  max-width: 400px;   /* chart won’t grow too wide */
+  margin: 0 auto;     /* center horizontally */
+}
+
+#weekBar {
+  height: 180px !important;  /* smaller height */
+}
+  </style>
+</head>
+<body>
+
+  <!-- Page 1: Splash -->
+  <div id="page1">
+    <h1 id="appName">Focus Guardian</h1>
+    <p id="slogan">Take control of your digital habits</p>
+  </div>
+
+  <!-- Page 2: Home -->
+  <div id="page2" class="page" style="display:none;">
+    <h1 id="homeTitle">Focus Guardian</h1>
+
+    <!-- Search -->
+    <div class="searchWrap">
+      <input id="searchInput" type="search" placeholder="Search apps…" oninput="renderApps()" />
+    </div>
+
+    <!-- Swipeable slider: Apps | Mini Screen Time -->
+    <div class="slider" id="homeSlider">
+
+      <!-- Slide 1: Apps list -->
+      <section class="slide" aria-label="Apps">
+        <h2 id="appsHead">Apps</h2>
+        <div class="apps" id="appsList"></div>
+        <p class="muted" id="appsHint">Tip: type above to filter your apps</p>
+      </section>
+
+      <!-- Slide 2: Mini screen time -->
+      <section class="slide" aria-label="Screen Time">
+        <h2 id="miniStHead">Screen Time</h2>
+        <canvas id="miniPie" height="220"></canvas>
+        <div id="miniUsageList"></div>
+        <p class="muted" id="swipeHint">Swipe between Apps and Screen Time</p>
+      </section>
+    </div>
+
+    <!-- Bottom Nav -->
+    <div class="nav">
+      <div onclick="goToPage2()" id="navHome" class="active">Home</div>
+      <div onclick="goToPage4()" id="navBlocked">Blocked Apps</div>
+      <div onclick="goToPage6()" id="navStats">Focus Stats</div>
+      <div onclick="goToPage5()" id="navSettings">Settings</div>
+    </div>
+  </div>
+
+  <!-- Page 3: Set Limit -->
+  <div id="page3" class="page">
+    <h1 id="limitTitle"></h1>
+    <div id="limitOptions"></div>
+    <button onclick="goBack()">⬅ <span id="backText">Back</span></button>
+  </div>
+
+  <!-- Page 4: Blocked Apps -->
+  <div id="page4" class="page">
+    <h1 id="blockedTitle">Blocked Apps</h1>
+    <div id="blockedList"></div>
+    <button onclick="goToPage2()">⬅ <span id="backText2">Back</span></button>
+  </div>
+
+  <!-- Page 5: Settings -->
+  <div id="page5" class="page">
+    <h1 id="settingsTitle">Settings</h1>
+    <div class="option" onclick="toggleLanguages()" id="changeLang">Change Language</div>
+    <div id="languageOptions" style="display:none;">
+      <!-- language buttons injected by JS (so the names can appear in native script) -->
+    </div>
+    <button onclick="goToPage2()">⬅ <span id="backText3">Back</span></button>
+  </div>
+
+  <!-- Page 6: Focus Stats -->
+  <div id="page6" class="page">
+    <h1 id="statsTitle">Focus Stats</h1>
+    <div class="chartWrap">
+      <canvas id="weekBar"></canvas>
+    </div>
+    <p class="muted" id="barHint">Tap a bar to see the day’s total</p>
+    <div id="barMsg" style="margin-top:10px;font-weight:bold;"></div>
+    <button onclick="goToPage2()">⬅ <span id="backText4">Back</span></button>
+  </div>
+
+<script>
+  // Backend base URL
+  const API_URL = "http://localhost:3001";   // 👈 Add this line here
+
+
+  /* -------------------- Data -------------------- */
+  // Demo "installed" apps list (name + logo)
+  const ALL_APPS = [
+    {name:'YouTube',  logo:'https://img.icons8.com/color/48/youtube-play.png'},
+    {name:'Instagram',logo:'https://img.icons8.com/color/48/instagram-new.png'},
+    {name:'Facebook', logo:'https://img.icons8.com/color/48/facebook.png'},
+    {name:'WhatsApp', logo:'https://img.icons8.com/color/48/whatsapp.png'},
+    {name:'Snapchat', logo:'https://img.icons8.com/color/48/snapchat.png'},
+    {name:'Twitter (X)',logo:'https://img.icons8.com/ios-filled/50/twitterx--v2.png'},
+    {name:'Spotify',  logo:'https://img.icons8.com/color/48/spotify--v1.png'},
+    {name:'Gmail',    logo:'https://img.icons8.com/color/48/gmail--v1.png'},
+    {name:'Chrome',   logo:'https://img.icons8.com/color/48/chrome--v1.png'},
+    {name:'Pinterest',logo:'https://img.icons8.com/color/48/pinterest--v1.png'}
+  ];
+
+  // Fake per-app usage minutes (for pie)
+  const appUsage = {
+    'YouTube': 135, 'Instagram': 95, 'Facebook': 42, 'WhatsApp': 76, 'Chrome': 54
+  };
+
+  // Fake weekly totals (Mon..Sun) in minutes
+  const weekDays = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  const weekTotals = [120, 95, 140, 110, 180, 210, 160];
+
+  /* ---------------- State ---------------- */
+  let currentApp = "";
+  let currentAppLogo = "";
+  let blockedApps = [];
+  let currentLang = 'en';
+  let miniPieChart = null;
+  let barChart = null;
+
+  /* -------------- Translations 12 languages -------------- */
+  // NOTE: UI labels only (short and clear)
+  const T = {
+    en:{name:'English',
+      slogan:"Take control of your digital habits",
+      home:"Home", blocked:"Blocked Apps", stats:"Focus Stats", settings:"Settings",
+      apps:"Apps", searchPh:"Search apps…", searchTip:"Tip: type above to filter your apps",
+      screenTime:"Screen Time", swipeHint:"Swipe between Apps and Screen Time",
+      setLimit:"Set Limit", usageLimit:"Usage Limit", blockedLimit:"Blocked Limit",
+      chooseUsage:"Choose Usage Limit:", chooseBlocked:"Choose Blocked Limit:",
+      back:"Back", blockedEmpty:"No apps blocked ✅",
+      statsTitle:"Focus Stats", barHint:"Tap a bar to see the day’s total",
+      dayFmt:(d,m)=>`${d}: ${m}`
+    },
+    hi:{name:'हिन्दी',
+      slogan:"अपनी डिजिटल आदतों पर नियंत्रण रखें",
+      home:"होम", blocked:"ब्लॉक किए गए ऐप्स", stats:"फोकस आँकड़े", settings:"सेटिंग्स",
+      apps:"ऐप्स", searchPh:"ऐप्स खोजें…", searchTip:"टाइप करें और ऐप्स फ़िल्टर करें",
+      screenTime:"स्क्रीन टाइम", swipeHint:"ऐप्स और स्क्रीन टाइम के बीच स्वाइप करें",
+      setLimit:"सीमा तय करें", usageLimit:"उपयोग सीमा", blockedLimit:"ब्लॉक सीमा",
+      chooseUsage:"उपयोग सीमा चुनें:", chooseBlocked:"ब्लॉक सीमा चुनें:",
+      back:"वापस", blockedEmpty:"कोई ऐप ब्लॉक नहीं है ✅",
+      statsTitle:"फोकस आँकड़े", barHint:"दिन का कुल समय देखने के लिए बार पर टैप करें",
+      dayFmt:(d,m)=>`${d}: ${m}`
+    },
+    bn:{name:'বাংলা',
+      slogan:"আপনার ডিজিটাল অভ্যাস নিয়ন্ত্রণ করুন",
+      home:"হোম", blocked:"ব্লক করা অ্যাপস", stats:"ফোকাস পরিসংখ্যান", settings:"সেটিংস",
+      apps:"অ্যাপস", searchPh:"অ্যাপ খুঁজুন…", searchTip:"টাইপ করলে অ্যাপ ফিল্টার হবে",
+      screenTime:"স্ক্রিন টাইম", swipeHint:"অ্যাপস ও স্ক্রিন টাইমে সোয়াইপ করুন",
+      setLimit:"সীমা নির্ধারণ", usageLimit:"ব্যবহার সীমা", blockedLimit:"ব্লক সীমা",
+      chooseUsage:"ব্যবহার সীমা বেছে নিন:", chooseBlocked:"ব্লক সীমা বেছে নিন:",
+      back:"ফিরে যান", blockedEmpty:"কোনও অ্যাপ ব্লক নেই ✅",
+      statsTitle:"ফোকাস পরিসংখ্যান", barHint:"দিনের মোট দেখতে বারে ট্যাপ করুন",
+      dayFmt:(d,m)=>`${d}: ${m}`
+    },
+    te:{name:'తెలుగు',
+      slogan:"మీ డిజిటల్ అలవాట్లను నియంత్రించండి",
+      home:"హోమ్", blocked:"బ్లాక్ చేసిన యాప్స్", stats:"ఫోకస్ గణాంకాలు", settings:"సెట్టింగ్స్",
+      apps:"అప్స్", searchPh:"యాప్‌ల కోసం శోధించండి…", searchTip:"పైకి టైప్ చేస్తే యాప్‌లు ఫిల్టర్ అవుతాయి",
+      screenTime:"స్క్రీన్ టైమ్", swipeHint:"అప్స్ ↔️ స్క్రీన్ టైమ్‌కి స్వైప్ చేయండి",
+      setLimit:"పరిమితి పెట్టు", usageLimit:"వినియోగ పరిమితి", blockedLimit:"బ్లాక్ పరిమితి",
+      chooseUsage:"వినియోగ పరిమితి ఎంచుకోండి:", chooseBlocked:"బ్లాక్ పరిమితి ఎంచుకోండి:",
+      back:"వెనక్కి", blockedEmpty:"ఏయాప్‌లు బ్లాక్ కాలేదు ✅",
+      statsTitle:"ఫోకస్ గణాంకాలు", barHint:"రోజు మొత్తాన్ని చూడటానికి బార్‌పై టాప్ చేయండి",
+      dayFmt:(d,m)=>`${d}: ${m}`
+    },
+    mr:{name:'मराठी',
+      slogan:"तुमच्या डिजिटल सवयींवर नियंत्रण ठेवा",
+      home:"मुख्यपृष्ठ", blocked:"ब्लॉक केलेले अॅप्स", stats:"फोकस आकडे", settings:"सेटिंग्ज",
+      apps:"अॅप्स", searchPh:"अॅप शोधा…", searchTip:"टाईप करा आणि अॅप्स फिल्टर करा",
+      screenTime:"स्क्रीन टाइम", swipeHint:"अॅप्स आणि स्क्रीन टाइम दरम्यान स्वाइप करा",
+      setLimit:"मर्यादा ठेवा", usageLimit:"वापर मर्यादा", blockedLimit:"ब्लॉक मर्यादा",
+      chooseUsage:"वापर मर्यादा निवडा:", chooseBlocked:"ब्लॉक मर्यादा निवडा:",
+      back:"मागे", blockedEmpty:"कोणतेही अॅप ब्लॉक नाही ✅",
+      statsTitle:"फोकस आकडे", barHint:"दिवसाचा एकूण वेळ पाहण्यासाठी बारवर टॅप करा",
+      dayFmt:(d,m)=>`${d}: ${m}`
+    },
+    ta:{name:'தமிழ்',
+      slogan:"உங்கள் டிஜிட்டல் பழக்கங்களை கட்டுப்படுத்துங்கள்",
+      home:"முகப்பு", blocked:"தடைசெய்யப்பட்ட செயலிகள்", stats:"கவனம் புள்ளிவிவரங்கள்", settings:"அமைப்புகள்",
+      apps:"செயலிகள்", searchPh:"செயலிகளைத் தேடவும்…", searchTip:"டைப் செய்தால் செயலிகள் வடிகட்டப்படும்",
+      screenTime:"திரை நேரம்", swipeHint:"செயலிகள் ↔ திரை நேரம் இடையே ஸ்வைப் செய்யவும்",
+      setLimit:"வரம்பு அமைக்கவும்", usageLimit:"பயன்பாட்டு வரம்பு", blockedLimit:"தடை வரம்பு",
+      chooseUsage:"பயன்பாட்டு வரம்பைத் தேர்ந்தெடுக்கவும்:", chooseBlocked:"தடை வரம்பைத் தேர்ந்தெடுக்கவும்:",
+      back:"பின் செல்ல", blockedEmpty:"யாரும் தடை செய்யப்படவில்லை ✅",
+      statsTitle:"கவனம் புள்ளிவிவரங்கள்", barHint:"நாளின் மொத்தத்தைப் பார்க்க பட்டியில் தட்டவும்",
+      dayFmt:(d,m)=>`${d}: ${m}`
+    },
+    gu:{name:'ગુજરાતી',
+      slogan:"તમારી ડિજિટલ આદતો પર નિયંત્રણ રાખો",
+      home:"હોમ", blocked:"બ્લોક કરેલ એપ્સ", stats:"ફોકસ આંકડા", settings:"સેટિંગ્સ",
+      apps:"એપ્સ", searchPh:"એપ્સ શોધો…", searchTip:"લખતાં જ એપ્સ ફિલ્ટર થશે",
+      screenTime:"સ્ક્રીન સમય", swipeHint:"એપ્સ અને સ્ક્રીન સમય વચ્ચે સ્વાઇપ કરો",
+      setLimit:"મર્યાદા સેટ કરો", usageLimit:"વપરાશ મર્યાદા", blockedLimit:"બ્લોક મર્યાદા",
+      chooseUsage:"વપરાશ મર્યાદા પસંદ કરો:", chooseBlocked:"બ્લોક મર્યાદા પસંદ કરો:",
+      back:"પાછા", blockedEmpty:"કોઈ એપ બ્લોક નથી ✅",
+      statsTitle:"ફોકસ આંકડા", barHint:"દિવસનો કુલ સમય જોવા બાર પર ટેપ કરો",
+      dayFmt:(d,m)=>`${d}: ${m}`
+    },
+    ur:{name:'اردو',
+      slogan:"اپنی ڈیجیٹل عادات پر قابو پائیں",
+      home:"ہوم", blocked:"بلاک شدہ ایپس", stats:"فوکس اعدادوشمار", settings:"سیٹنگز",
+      apps:"ایپس", searchPh:"ایپس تلاش کریں…", searchTip:"ٹائپ کریں اور ایپس فلٹر ہوں گی",
+      screenTime:"اسکرین ٹائم", swipeHint:"ایپس اور اسکرین ٹائم کے درمیان سوائپ کریں",
+      setLimit:"حد مقرر کریں", usageLimit:"استعمال کی حد", blockedLimit:"بلاک حد",
+      chooseUsage:"استعمال کی حد منتخب کریں:", chooseBlocked:"بلاک حد منتخب کریں:",
+      back:"واپس", blockedEmpty:"کوئی ایپ بلاک نہیں ✅",
+      statsTitle:"فوکس اعدادوشمار", barHint:"دن کا کل وقت دیکھنے کیلئے بار پر ٹیپ کریں",
+      dayFmt:(d,m)=>`${d}: ${m}`
+    },
+    kn:{name:'ಕನ್ನಡ',
+      slogan:"ನಿಮ್ಮ ಡಿಜಿಟಲ್ ಅಭ್ಯಾಸಗಳನ್ನು ನಿಯಂತ್ರಿಸಿ",
+      home:"ಮನೆ", blocked:"ತಡೆಹಿಡಿದ ಅಪ್ಲಿಕೇಶನ್‌ಗಳು", stats:"ಫೋಕಸ್ ಅಂಕಿಅಂಶಗಳು", settings:"ಸೆಟ್ಟಿಂಗ್ಸ್",
+      apps:"ಅಪ್ಲಿಕೇಶನ್‌ಗಳು", searchPh:"ಆ್ಯಪ್‌ಗಳನ್ನು ಹುಡುಕಿ…", searchTip:"ಟೈಪ್ ಮಾಡಿದಂತೆ ಆ್ಯಪ್‌ಗಳು ಫಿಲ್ಟರ್ ಆಗುತ್ತವೆ",
+      screenTime:"ಸ್ಕ್ರೀನ್ ಟೈಮ್", swipeHint:"ಆ್ಯಪ್‌ಗಳು ↔ ಸ್ಕ್ರೀನ್ ಟೈಮ್ ನಡುವೆ ಸ್ವೈಪ್ ಮಾಡಿ",
+      setLimit:"ಮಿತಿ ಹಾಕಿ", usageLimit:"ಬಳಕೆ ಮಿತಿ", blockedLimit:"ತಡೆ ಮಿತಿ",
+      chooseUsage:"ಬಳಕೆ ಮಿತಿಯನ್ನು ಆಯ್ಕೆಮಾಡಿ:", chooseBlocked:"ತಡೆ ಮಿತಿಯನ್ನು ಆಯ್ಕೆಮಾಡಿ:",
+      back:"ಹಿಂದೆ", blockedEmpty:"ಯಾವ ಆ್ಯಪ್ ಕೂಡ ತಡೆಗೊಂಡಿಲ್ಲ ✅",
+      statsTitle:"ಫೋಕಸ್ ಅಂಕಿಅಂಶಗಳು", barHint:"ದಿನದ ಒಟ್ಟು ನೋಡಲು ಬಾರ್ ಅನ್ನು ಟ್ಯಾಪ್ ಮಾಡಿ",
+      dayFmt:(d,m)=>`${d}: ${m}`
+    },
+    ml:{name:'മലയാളം',
+      slogan:"നിങ്ങളുടെ ഡിജിറ്റൽ ശീലങ്ങളെ നിയന്ത്രിക്കുക",
+      home:"ഹോം", blocked:"തടഞ്ഞ ആപ്പുകൾ", stats:"ഫോക്കസ് സ്ഥിതിവിവരങ്ങൾ", settings:"സെറ്റിംഗ്സ്",
+      apps:"ആപ്പുകൾ", searchPh:"ആപ്പുകൾ തിരയുക…", searchTip:"ടൈപ്പ് ചെയ്‌താൽ ആപ്പുകൾ ഫിൽറ്റർ ചെയ്യും",
+      screenTime:"സ്ക്രീൻ സമയം", swipeHint:"ആപ്പുകളും സ്ക്രീൻ സമയവും ഇടയ്ക്ക് സ്വൈപ്പ് ചെയ്യുക",
+      setLimit:"പരിധി നിശ്ചയിക്കുക", usageLimit:"ഉപയോഗ പരിധി", blockedLimit:"തടയൽ പരിധി",
+      chooseUsage:"ഉപയോഗ പരിധി തിരഞ്ഞെടുക്കുക:", chooseBlocked:"തടയൽ പരിധി തിരഞ്ഞെടുക്കുക:",
+      back:"തിരികെ", blockedEmpty:"ആപ്പുകൾ ഒന്നും തടഞ്ഞിട്ടില്ല ✅",
+      statsTitle:"ഫോക്കസ് സ്ഥിതിവിവരങ്ങൾ", barHint:"ദിവസത്തിലെ മൊത്തം സമയം കാണാൻ ബാർ തൊടുക",
+      dayFmt:(d,m)=>`${d}: ${m}`
+    },
+    or:{name:'ଓଡିଆ',
+      slogan:"ଆପଣଙ୍କ ଡିଜିଟାଲ ଅଭ୍ୟାସକୁ ନିୟନ୍ତ୍ରଣ କରନ୍ତୁ",
+      home:"ହୋମ", blocked:"ବ୍ଲକ୍ କରା ଆପ୍ସ", stats:"ଫୋକସ୍ ସଂଖ୍ୟା", settings:"ସେଟିଂସ୍",
+      apps:"ଆପ୍ସ", searchPh:"ଆପ୍ସ ଖୋଜନ୍ତୁ…", searchTip:"ଟାଇପ୍ କଲେ ଆପ୍ସ ଫିଲ୍ଟର ହେବ",
+      screenTime:"ସ୍କ୍ରିନ୍ ଟାଇମ୍", swipeHint:"ଆପ୍ସ ଓ ସ୍କ୍ରିନ୍ ଟାଇମ୍ ମଧ୍ୟରେ ସ୍ୱାଇପ୍ କରନ୍ତୁ",
+      setLimit:"ସୀମା ଧାରଣ କରନ୍ତୁ", usageLimit:"ବ୍ୟବହାର ସୀମା", blockedLimit:"ବ୍ଲକ୍ ସୀମା",
+      chooseUsage:"ବ୍ୟବହାର ସୀମା ଚୟନ କରନ୍ତୁ:", chooseBlocked:"ବ୍ଲକ୍ ସୀମା ଚୟନ କରନ୍ତୁ:",
+      back:"ପଛକୁ", blockedEmpty:"କୌଣସି ଆପ୍ ବ୍ଲକ୍ ନୁହେଁ ✅",
+      statsTitle:"ଫୋକସ୍ ସଂଖ୍ୟା", barHint:"ଦିନର ମୋଟ ଦେଖିବାକୁ ବାର୍ ଉପରେ ଟାପ୍ କରନ୍ତୁ",
+      dayFmt:(d,m)=>`${d}: ${m}`
+    },
+    pa:{name:'ਪੰਜਾਬੀ',
+      slogan:"ਆਪਣੀਆਂ ਡਿਜਿਟਲ ਆਦਤਾਂ ‘ਤੇ ਕਾਬੂ ਪਾਓ",
+      home:"ਘਰ", blocked:"ਬਲਾਕ ਕੀਤੀਆਂ ਐਪਸ", stats:"ਧਿਆਨ ਅੰਕੜੇ", settings:"ਸੈਟਿੰਗਜ਼",
+      apps:"ਐਪਸ", searchPh:"ਐਪਸ ਖੋਜੋ…", searchTip:"ਟਾਈਪ ਕਰਦੇ ਹੀ ਐਪਸ ਫਿਲਟਰ ਹੋਣਗੀਆਂ",
+      screenTime:"ਸਕਰੀਨ ਸਮਾਂ", swipeHint:"ਐਪਸ ਅਤੇ ਸਕਰੀਨ ਸਮਾਂ ਵਿਚਕਾਰ ਸਵਾਈਪ ਕਰੋ",
+      setLimit:"ਸੀਮਾ ਸੈੱਟ ਕਰੋ", usageLimit:"ਵਰਤੋਂ ਸੀਮਾ", blockedLimit:"ਬਲਾਕ ਸੀਮਾ",
+      chooseUsage:"ਵਰਤੋਂ ਸੀਮਾ ਚੁਣੋ:", chooseBlocked:"ਬਲਾਕ ਸੀਮਾ ਚੁਣੋ:",
+      back:"ਵਾਪਸ", blockedEmpty:"ਕੋਈ ਵੀ ਐਪ ਬਲਾਕ ਨਹੀਂ ✅",
+      statsTitle:"ਧਿਆਨ ਅੰਕੜੇ", barHint:"ਦਿਨ ਦਾ ਕੁੱਲ ਵੇਖਣ ਲਈ ਬਾਰ ‘ਤੇ ਟੈਪ ਕਰੋ",
+      dayFmt:(d,m)=>`${d}: ${m}`
+    }
+  };
+  
+
+  /* -------------- Language UI -------------- */
+  function buildLanguageButtons(){
+    const c = document.getElementById('languageOptions');
+    c.innerHTML = '';
+    Object.entries(T).forEach(([code,obj])=>{
+      const btn = document.createElement('div');
+      btn.className = 'option';
+      btn.textContent = obj.name;
+      btn.onclick = ()=> setLanguage(code);
+      c.appendChild(btn);
+    });
+  }
+
+  function applyLanguage(){
+    const t = T[currentLang];
+    document.getElementById('slogan').innerText = t.slogan;
+    document.getElementById('navHome').innerText = t.home;
+    document.getElementById('navBlocked').innerText = t.blocked;
+    document.getElementById('navStats').innerText = t.stats;
+    document.getElementById('navSettings').innerText = t.settings;
+
+    document.getElementById('blockedTitle').innerText = t.blocked;
+    document.getElementById('settingsTitle').innerText = t.settings;
+    document.getElementById('statsTitle').innerText = t.statsTitle;
+
+    document.getElementById('appsHead').innerText = t.apps;
+    document.getElementById('appsHint').innerText = t.searchTip;
+    document.getElementById('miniStHead').innerText = t.screenTime;
+    document.getElementById('swipeHint').innerText = t.swipeHint;
+    document.getElementById('homeTitle').innerText = "Focus Guardian";
+    document.getElementById('searchInput').placeholder = t.searchPh;
+
+    ['backText','backText2','backText3','backText4'].forEach(id=>{
+      const el = document.getElementById(id); if(el) el.innerText = t.back;
+    });
+    document.querySelectorAll(".card button").forEach(b=> b.innerText = t.setLimit);
+    document.getElementById('barHint').innerText = t.barHint;
+
+    // Set Limit page strings are rebuilt when opened (see openSetLimit).
+    renderApps();              // update "Set Limit" button labels after lang change
+    renderMiniPie();           // re-render legend language if any
+  }
+
+  function setLanguage(lang){
+    currentLang = lang;
+    applyLanguage();
+    alert("✅ Language: " + T[lang].name);
+  }
+
+  function toggleLanguages(){
+    const el = document.getElementById('languageOptions');
+    el.style.display = (el.style.display==='none' || !el.style.display) ? 'block' : 'none';
+  }
+
+  /* -------------- Navigation -------------- */
+  function setActiveNav(id){
+    document.querySelectorAll('.nav div').forEach(n=>n.classList.remove('active'));
+    const el = document.getElementById(id); if(el) el.classList.add('active');
+  }
+
+  function hideAll(){
+    ['page1','page2','page3','page4','page5','page6'].forEach(id=>document.getElementById(id).style.display='none');
+  }
+  function goToPage2(){ hideAll(); document.getElementById('page2').style.display='block'; setActiveNav('navHome'); applyLanguage(); }
+  function goToPage3(){ hideAll(); document.getElementById('page3').style.display='block'; }
+  function goToPage4(){ hideAll(); document.getElementById('page4').style.display='block'; setActiveNav('navBlocked'); renderBlocked(); }
+  function goToPage5(){ hideAll(); document.getElementById('page5').style.display='block'; setActiveNav('navSettings'); applyLanguage(); }
+  function goToPage6(){ hideAll(); document.getElementById('page6').style.display='block'; setActiveNav('navStats'); renderBar(); }
+  function goBack(){ goToPage2(); }
+
+  window.onload = function(){ setTimeout(goToPage2, 1200); buildLanguageButtons(); applyLanguage(); renderMiniPie(); };
+
+  /* -------------- Home: Apps list + Search -------------- */
+  function renderApps(){
+    const wrap = document.getElementById('appsList');
+    const q = (document.getElementById('searchInput').value || '').toLowerCase().trim();
+    const t = T[currentLang];
+
+    wrap.innerHTML = '';
+    const views = ALL_APPS.filter(a => a.name.toLowerCase().includes(q));
+    if(views.length === 0){
+      const p = document.createElement('p');
+      p.className = 'muted';
+      p.textContent = 'No results';
+      wrap.appendChild(p);
+      return;
+    }
+    views.forEach(app=>{
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.innerHTML = `
+        <div class="left">
+          <img src="${app.logo}" alt="${app.name}">
+          <div>${app.name}</div>
+        </div>
+        <button>${t.setLimit}</button>
+      `;
+      card.querySelector('button').onclick = ()=> openSetLimit(app.name, app.logo);
+      wrap.appendChild(card);
+    });
+  }
+
+  /* -------------- Mini Screen Time (pie) -------------- */
+  function renderMiniPie(){
+    const labels = Object.keys(appUsage);
+    const data = labels.map(k => appUsage[k]);
+    const ctx = document.getElementById('miniPie').getContext('2d');
+    if(miniPieChart) miniPieChart.destroy();
+    miniPieChart = new Chart(ctx, {
+      type: 'pie',
+      data: {
+        labels,
+        datasets: [{ data, backgroundColor:['#2dd4bf','#60a5fa','#f472b6','#f59e0b','#34d399'] }]
+      },
+      options:{ plugins:{ legend:{ display:false } } }
+    });
+
+    // usage list with logos + time
+    const list = document.getElementById('miniUsageList');
+    list.innerHTML = '';
+    labels.forEach(name=>{
+      const logo = (ALL_APPS.find(a=>a.name.startsWith(name))||{}).logo || 'https://img.icons8.com/ios/50/application-window.png';
+      const p = document.createElement('div');
+      p.className = 'usageLine';
+      p.innerHTML = `<img src="${logo}" alt=""> <span>${name}: ${toHrs(appUsage[name])}</span>`;
+      list.appendChild(p);
+    });
+  }
+
+  /* -------------- Focus Stats (weekly bar) -------------- */
+  function renderBar(){
+    const ctx = document.getElementById('weekBar').getContext('2d');
+    if(barChart) barChart.destroy();
+    barChart = new Chart(ctx, {
+      type:'bar',
+      data:{ labels: weekDays, datasets:[{ data: weekTotals, borderRadius:6 }] },
+      options:{
+        scales:{ y:{ beginAtZero:true, ticks:{ callback:(v)=>v+'m' } } },
+        plugins:{ legend:{ display:false }, tooltip:{ enabled:false } },
+        onClick:(evt, els)=>{
+          if(!els.length) return;
+          const i = els[0].index;
+          const day = weekDays[i];
+          const mins = weekTotals[i];
+          const msg = T[currentLang].dayFmt(day, toHrs(mins));
+          document.getElementById('barMsg').innerText = msg;
+        }
+      }
+    });
+  }
+
+  /* -------------- Set Limit flow -------------- */
+  function openSetLimit(app,logo){
+    currentApp = app; currentAppLogo = logo;
+    hideAll(); document.getElementById('page3').style.display='block';
+    const t = T[currentLang];
+    document.getElementById('limitTitle').innerText = `${t.setLimit} for ${app}`;
+    document.getElementById('limitOptions').innerHTML = `
+      <div class="option" onclick="showUsageLimit()">${t.usageLimit}</div>
+      <div class="option" onclick="showBlockedLimit()">${t.blockedLimit}</div>
+    `;
+  }
+  function showUsageLimit(){
+    const t = T[currentLang];
+    const times = ["1 min","5 min","15 min","30 min","1 hr","2 hr"];
+    let html = `<h3>${t.chooseUsage}</h3>`;
+    times.forEach(x => html += `<div class="option" onclick="selectLimit('Usage','${x}')">${x}</div>`);
+    document.getElementById('limitOptions').innerHTML = html;
+  }
+  function showBlockedLimit(){
+    const t = T[currentLang];
+    const times = ["30 min","45 min","1 hr","2 hr","6 hr","8 hr"];
+    let html = `<h3>${t.chooseBlocked}</h3>`;
+    times.forEach(x => html += `<div class="option" onclick="selectLimit('Blocked','${x}')">${x}</div>`);
+    document.getElementById('limitOptions').innerHTML = html;
+  }
+  function selectLimit(type,time){
+    alert(`${currentApp} → ${type} ${time} ✅`);
+    if(type==='Blocked' && !blockedApps.find(a=>a.name===currentApp)){
+      blockedApps.push({name:currentApp, logo:currentAppLogo});
+    }
+    goBack();
+  }
+
+  /* -------------- Blocked Apps page -------------- */
+  function renderBlocked(){
+    const list = document.getElementById('blockedList');
+    const t = T[currentLang];
+    list.innerHTML = '';
+    if(blockedApps.length===0){
+      list.innerHTML = `<p>${t.blockedEmpty}</p>`;
+    }else{
+      blockedApps.forEach(a=>{
+        list.innerHTML += `<div class="card"><div class="left"><img src="${a.logo}"><span>${a.name}</span></div></div>`;
+      });
+    }
+  }
+
+  /* ---------------- Load data on start ---------------- */
+  window.onload = function(){
+    setTimeout(goToPage2, 1200);
+    buildLanguageButtons();
+    applyLanguage();
+    renderMiniPie();
+    fetchBlockedApps();   // 🔑 Load blocked apps from backend
+  };
+  // Load blocked apps when app starts
+async function fetchBlockedApps() {
+  try {
+    const res = await fetch(`${API_URL}/blocked-apps`);
+    blockedApps = await res.json();   // save backend data into frontend variable
+    renderBlocked();                  // show in UI
+  } catch (err) {
+    console.error("❌ Failed to fetch blocked apps:", err);
+  }
+}
+
+  /* -------------- Helpers -------------- */
+  function toHrs(min){
+    const h = Math.floor(min/60), m = min%60;
+    if(h<=0) return `${m}m`;
+    return `${h}h ${m}m`;
+  }
+
+</script>
+</body>
+</html>

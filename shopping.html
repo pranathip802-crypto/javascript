@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Shopping Discount</title>
+</head>
+<body>
+
+<h2>Shopping Discount</h2>
+
+<input type="number" id="amount" placeholder="Enter Purchase Amount">
+<button onclick="discount()">Check</button>
+
+<h3 id="result"></h3>
+
+<script>
+function discount() {
+    let amount = Number(document.getElementById("amount").value);
+
+    if (amount > 5000) {
+        document.getElementById("result").innerHTML = "Discount: 20%";
+    } else if (amount > 3000) {
+        document.getElementById("result").innerHTML = "Discount: 10%";
+    } else {
+        document.getElementById("result").innerHTML = "No Discount";
+    }
+}
+</script>
+
+</body>
+</html>
