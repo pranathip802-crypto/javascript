@@ -1,0 +1,28 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Divisible by 5</title>
+</head>
+<body>
+
+<h2>Divisible by 5</h2>
+
+<input type="number" id="num">
+<button onclick="check()">Check</button>
+
+<h3 id="result"></h3>
+
+<script>
+function check() {
+    let num = Number(document.getElementById("num").value);
+
+    if (num % 5 === 0)
+        document.getElementById("result").innerHTML = "Divisible by 5";
+    else
+        document.getElementById("result").innerHTML = "Not Divisible by 5";
+}
+</script>
+
+</body>
+</html>

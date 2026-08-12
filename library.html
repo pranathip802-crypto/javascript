@@ -1,0 +1,37 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Library Book Issue</title>
+</head>
+<body>
+
+<h2>Library Book Issue</h2>
+
+Library Member (Yes/No):
+<input type="text" id="member"><br><br>
+
+Pending Fine (Yes/No):
+<input type="text" id="fine"><br><br>
+
+<button onclick="issueBook()">Issue Book</button>
+
+<h3 id="result"></h3>
+
+<script>
+function issueBook() {
+
+    let member = document.getElementById("member").value;
+    let fine = document.getElementById("fine").value;
+
+    if (member.toLowerCase() == "yes" && fine.toLowerCase() == "no") {
+        result.innerHTML = "Book Issued Successfully";
+    } else {
+        result.innerHTML = "Book Cannot Be Issued";
+    }
+
+}
+</script>
+
+</body>
+</html>

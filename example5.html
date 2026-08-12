@@ -1,0 +1,20 @@
+<h2>Temperature Check</h2>
+
+<input type="number" id="temp" placeholder="Enter Temperature">
+<button onclick="weather()">Check</button>
+
+<h3 id="result"></h3>
+
+<script>
+function weather() {
+    let temp = Number(document.getElementById("temp").value);
+
+    if (temp > 40)
+        document.getElementById("result").innerHTML = "Hot";
+    else
+        document.getElementById("result").innerHTML = "Normal Weather";
+}
+</script>
+
+</body>
+</html>

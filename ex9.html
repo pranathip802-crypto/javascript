@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ATM Withdrawal</title>
+</head>
+<body>
+
+<h2>ATM Withdrawal</h2>
+
+<input type="number" id="balance" placeholder="Balance"><br><br>
+<input type="number" id="withdraw" placeholder="Withdraw Amount"><br><br>
+
+<button onclick="atm()">Withdraw</button>
+
+<h3 id="result"></h3>
+
+<script>
+function atm() {
+    let balance = Number(document.getElementById("balance").value);
+    let amount = Number(document.getElementById("withdraw").value);
+
+    if (amount <= balance)
+        document.getElementById("result").innerHTML =
+            "Withdrawal Successful<br>Remaining Balance: " + (balance - amount);
+    else
+        document.getElementById("result").innerHTML = "Insufficient Balance";
+}
+</script>
+
+</body>
+</html>

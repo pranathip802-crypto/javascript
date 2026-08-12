@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>BMI Calculator</title>
+</head>
+<body>
+<script>
+    let weight =prompt("Enter your weight :");
+    let height =prompt("Enter your height s:");
+
+    let bmi = weight / (height * height);
+
+    if (bmi < 18.5) {
+        alert("Underweight");
+    }
+    else if (bmi >= 18.5 && bmi <= 24.9) {
+        alert("Normal weight");
+    }
+    else if (bmi >= 25 && bmi <= 29.9) {
+        alert("Overweight");
+    }
+    else {
+        alert("Obese");
+    }
+</script>
+</body>
+</html>

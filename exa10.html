@@ -1,0 +1,35 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Scholarship Eligibility</title>
+</head>
+<body>
+
+<h2>Scholarship Eligibility</h2>
+
+Average Marks:
+<input type="number" id="avg"><br><br>
+
+Family Income:
+<input type="number" id="income"><br><br>
+
+<button onclick="check()">Check</button>
+
+<h3 id="result"></h3>
+
+<script>
+function check() {
+    let avg = Number(document.getElementById("avg").value);
+    let income = Number(document.getElementById("income").value);
+
+    if (avg >= 90 && income < 30000) {
+        document.getElementById("result").innerHTML = "Eligible for Scholarship";
+    } else {
+        document.getElementById("result").innerHTML = "Not Eligible";
+    }
+}
+</script>
+
+</body>
+</html>

@@ -1,0 +1,31 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Movie Ticket</title>
+</head>
+<body>
+
+<h2>Movie Ticket Price</h2>
+
+<input type="number" id="age" placeholder="Enter Age">
+<button onclick="ticket()">Check</button>
+
+<h3 id="result"></h3>
+
+<script>
+function ticket() {
+    let age = Number(document.getElementById("age").value);
+
+    if (age < 12) {
+        result.innerHTML = "Ticket Price: ₹100 (Child)";
+    } else if (age < 60) {
+        result.innerHTML = "Ticket Price: ₹200 (Adult)";
+    } else {
+        result.innerHTML = "Ticket Price: ₹150 (Senior Citizen)";
+    }
+}
+</script>
+
+</body>
+</html>
