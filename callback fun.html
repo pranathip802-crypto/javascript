@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Callback Function</title>
+</head>
+
+<body>
+
+    <h1>Callback Function Example</h1>
+
+    <button onclick="runCallback()">Run Callback</button>
+
+    <script>
+
+        // First function
+        function greet() {
+            alert("Hello Students!");
+        }
+
+        // Function that receives another function
+        function execute(callback) {
+            callback();
+        }
+
+        // Call execute() and pass greet as callback
+        function runCallback() {
+            execute(greet);
+        }
+
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Nested Functions</title>
+</head>
+
+<body>
+
+    <h1>Nested Function Example</h1>
+
+    <button onclick="outer()">Run Function</button>
+
+    <script>
+
+        // Outer function
+        function outer() {
+
+            // Inner function
+            function inner() {
+                alert("Inner function");
+            }
+
+            // Calling inner function
+            inner();
+        }
+
+    </script>
+
+</body>
+</html>

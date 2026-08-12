@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Arrow Callback Function</title>
+</head>
+
+<body>
+
+    <h1>Arrow Callback Example</h1>
+
+    <button onclick="runCalculation()">Calculate</button>
+
+    <script>
+
+        // Function that receives a callback
+        function calculate(callback) {
+
+            let result = callback(10, 20);
+
+            alert("Result = " + result);
+        }
+
+        function runCalculation() {
+
+            // Arrow callback
+            calculate((a, b) => a + b);
+
+        }
+
+    </script>
+
+</body>
+</html>

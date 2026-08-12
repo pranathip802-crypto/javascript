@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Function Scope</title>
+</head>
+
+<body>
+
+    <h1>Function Scope Example</h1>
+
+    <button onclick="testFunction()">Run Function</button>
+
+    <script>
+
+        function test() {
+
+            // x is local to the function
+            let x = 100;
+
+            alert("Value of x = " + x);
+        }
+
+        function testFunction() {
+            test();
+        }
+
+    </script>
+
+</body>
+</html>

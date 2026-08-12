@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Function Calling Another Function</title>
+</head>
+
+<body>
+
+    <h1>Function Calling Another Function</h1>
+
+    <button onclick="display()">Calculate</button>
+
+    <script>
+
+        // First function
+        function add(a, b) {
+            return a + b;
+        }
+
+        // Second function calls the first function
+        function display() {
+
+            let result = add(10, 20);
+
+            alert("Result = " + result);
+        }
+
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>No Parameter but Return</title>
+</head>
+
+<body>
+
+    <h1>Function with No Parameter and Return</h1>
+
+    <button onclick="showNumber()">Show Number</button>
+
+    <script>
+
+        // No parameter but returns a value
+        function getNumber() {
+            return 100;
+        }
+
+        function showNumber() {
+
+            let number = getNumber();
+
+            alert("Number = " + number);
+
+        }
+
+    </script>
+
+</body>
+</html>

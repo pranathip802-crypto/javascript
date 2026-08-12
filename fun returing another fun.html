@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Function Returning Another Function</title>
+</head>
+
+<body>
+
+    <h1>Function Returning Another Function</h1>
+
+    <button onclick="showMessage()">Click Me</button>
+
+    <script>
+
+        // Outer function returns another function
+        function outer() {
+
+            return function() {
+                alert("Hello Students!");
+            };
+
+        }
+
+        function showMessage() {
+
+            // Store returned function
+            let result = outer();
+
+            // Call returned function
+            result();
+
+        }
+
+    </script>
+
+</body>
+</html>

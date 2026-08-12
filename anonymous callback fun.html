@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Anonymous Callback</title>
+</head>
+
+<body>
+
+    <h1>Anonymous Callback Example</h1>
+
+    <button onclick="runCalculation()">Calculate</button>
+
+    <script>
+
+        // Function that receives a callback
+        function calculate(callback) {
+
+            let result = callback(10, 20);
+
+            alert("Result = " + result);
+        }
+
+        function runCalculation() {
+
+            // Anonymous callback function
+            calculate(function(a, b) {
+                return a + b;
+            });
+
+        }
+
+    </script>
+
+</body>
+</html>

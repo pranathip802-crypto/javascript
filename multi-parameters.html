@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Multiple Parameters</title>
+</head>
+
+<body>
+
+    <h1>Multiple Parameters Example</h1>
+
+    <button onclick="showStudent()">Show Student</button>
+
+    <script>
+
+        // Multiple parameters
+        function student(name, age, course) {
+
+            alert(
+                "Name: " + name +
+                "\nAge: " + age +
+                "\nCourse: " + course
+            );
+
+        }
+
+        function showStudent() {
+
+            // Arguments
+            student("Ravi", 21, "Python");
+
+        }
+
+    </script>
+
+</body>
+</html>

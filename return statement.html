@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Return Statement</title>
+</head>
+
+<body>
+
+    <h1>Function Stops After Return</h1>
+
+    <button onclick="testFunction()">Run Function</button>
+
+    <script>
+
+        function test() {
+
+            return 10;
+
+            // This will NOT execute
+            alert("Hello");
+        }
+
+        function testFunction() {
+
+            let result = test();
+
+            alert("Returned Value = " + result);
+
+        }
+
+    </script>
+
+</body>
+</html>

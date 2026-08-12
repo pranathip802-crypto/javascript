@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Callback with Parameters</title>
+</head>
+
+<body>
+
+    <h1>Callback Function with Parameters</h1>
+
+    <button onclick="runCalculation()">Calculate</button>
+
+    <script>
+
+        // Function that adds two numbers
+        function add(a, b) {
+            return a + b;
+        }
+
+        // Function that receives a callback
+        function calculate(callback) {
+
+            let result = callback(10, 20);
+
+            alert("Result = " + result);
+        }
+
+        function runCalculation() {
+            calculate(add);
+        }
+
+    </script>
+
+</body>
+</html>

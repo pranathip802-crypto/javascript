@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Default Parameters</title>
+</head>
+
+<body>
+
+    <h1>Default Parameter Example</h1>
+
+    <button onclick="withName()">With Name</button>
+    <button onclick="withoutName()">Without Name</button>
+
+    <script>
+
+        // Default parameter
+        function greet(name = "Student") {
+            alert("Hello " + name);
+        }
+
+        function withName() {
+            greet("Ravi");
+        }
+
+        function withoutName() {
+            greet();
+        }
+
+    </script>
+
+</body>
+</html>
